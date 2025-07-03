@@ -9,7 +9,7 @@
 }
 
 <div class="text-center">
-    <p class="h2 mb-3" style="color:#09467C">SORTEO AGENCIAS 2024</p>
+    <p class="h2 mb-3" style="color:#09467C">SORTEO AGENCIAS @DateTime.Now.Year</p>
     <div class="container">
         <div class="row justify-content-center d-flex mb-3">
             <div class="col-lg-4 col-md-8">
@@ -46,14 +46,14 @@
                         </h1>
                         @if (ViewBag.sucursal is not null)
                         {
-                            <p id="fechas">
-                                Socios que actualizaron sus datos entre <br> el @FechaInicio al @FechaFin
-                            </p>
+                           <p id="fechas">
+                                CUENTAS INFANTILES <b>ACTIVAS</b>
+                            </p> 
                         }
                         else
                         {
                             <p id="fechas" style="display:none;">
-                                Socios que actualizaron sus datos entre <br> el @FechaInicio al @FechaFin
+                                CUENTAS INFANTILES <b>ACTIVAS</b>
                             </p>
                         }
 
@@ -74,6 +74,7 @@
                                 <div class="card-header bg-success text-white h3">Ganador</div>
                                 <div class="card-body">
                                     <h5 id="nombreGanador" style="color:#09467C" class="card-title"></h5>
+                                    <p class="m-0 p-0" id="nombreSocio"></p>
                                     <p class="m-0 p-0" id="cedulaGanador"></p>
                                     <p class="m-0 p-0" id="numeroGanador"></p>
                                 </div>
@@ -95,10 +96,11 @@
                         <table class="table small" id="tablaSocios" style="display:none">
                             <thead>
                                 <tr style="color:#09467C">
+                                    <th>Infante</th>
                                     <th>Socio</th>
                                     <th>Cedula</th>
                                     <th>N° Socio</th>
-                                    <th width="120">F. Act</th>
+                               @*      <th width="120">F. Act</th> *@
                                 </tr>
                             </thead>
                             <tbody style="font-size:14px;">
@@ -169,10 +171,11 @@
         $.each(listaSocios, function (index, socio) {
             console.log(socio.fechaActualizacion)
             var fila = $('<tr>').append(
+                $('<td>').text(socio.nombreCuenta),
                 $('<td>').text(socio.nombreSocio),
                 $('<td>').text(socio.cedula),
                 $('<td>').text(socio.numeroSocio),
-                $('<td>').text(socio.fechaActualizacion),
+                // $('<td>').text(socio.fechaActualizacion),
             );
             if (socio.estado === 'Ganador') {
                 fila.addClass('text-success h6');
@@ -188,11 +191,13 @@
             //Mostrar ganador en caso e haberlo
             $("#card-ganador").show();
             $("#nombreGanador").empty();
-            $("#nombreGanador").append(socioga.nombreSocio);
+            $("#nombreGanador").append(socioga.nombreCuenta);
             $("#cedulaGanador").empty();
             $("#cedulaGanador").append('Cédula: ' + socioga.cedula);
             $("#numeroGanador").empty();
             $("#numeroGanador").append('Número socio: ' + socioga.numeroSocio);
+            $("#nombreSocio").empty();
+            $("#nombreSocio").append('Titular: ' + socioga.nombreSocio);
         }
     }
 
