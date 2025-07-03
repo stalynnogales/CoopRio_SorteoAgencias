@@ -69,9 +69,9 @@ namespace Web_Sorteo_Agencias.Controllers
         }
 
         [HttpPost]
-        public ActionResult guardarGanador(int codigo, string numclgan )
+        public ActionResult guardarGanador(int codigo)
         {
-            var correcto = _repos.GuardarGanadorAgencia(codigo, numclgan);
+            var correcto = _repos.GuardarGanadorAgencia(codigo);
             IEnumerable<Socio> Socios = _repos.BuscarSociosSucursales(codigo);
             return Json(Socios);
         }

@@ -5,8 +5,9 @@ namespace Web_Sorteo_Agencias.Config
 {
     public class Repositorio
     {
-        string oradb_PROD = "DATA SOURCE=192.168.1.194:1521/topazpro;PASSWORD=;USER ID=RIOBAMBA;PERSIST SECURITY INFO=True;";
+        string oradb_PROD = "DATA SOURCE=10.200.50.31:1521/FINANCIAL;PASSWORD=sifizsoft;USER ID=system;PERSIST SECURITY INFO=True;";
         string oradb_DESA = "DATA SOURCE=10.200.50.137:1521/desarrollo;PASSWORD=sifizsoft;USER ID=system;PERSIST SECURITY INFO=True;";
+        //string oradb_DESA = "DATA SOURCE=10.200.50.31:1521/FINANCIAL;PASSWORD=sifizsoft;USER ID=system;PERSIST SECURITY INFO=True;";
 
         private List<Sucursal> listadoSucursales = new List<Sucursal>();
 
@@ -18,14 +19,14 @@ namespace Web_Sorteo_Agencias.Config
         {
             OracleConnection con = new OracleConnection(oradb_DESA);
             OracleCommand cmd = new OracleCommand();
-            cmd.CommandText = $@"SELECT 1 AS SUCURSAL, 'AGENCIAS' AS DESCRIPCION, count(*) NUMEROSOCIOS FROM FBS_CAPTACIONESVISTA.CUENTAMAESTRO c 
+            cmd.CommandText = $@"SELECT 1 AS SUCURSAL, 'OFICINAS' AS DESCRIPCION, count(*) NUMEROSOCIOS FROM FBS_CAPTACIONESVISTA.CUENTAMAESTRO c 
                 INNER JOIN FBS_RIFAS.RIFAMAESTRO r ON r.NUMEROCUENTA = c.CODIGO
                 WHERE r.SECUENCIALCONFIGURACIONRIFA = 7 AND c.CODIGOESTADO = 'A'";
             cmd.Connection = con;
             con.Open();
             OracleDataReader dr = cmd.ExecuteReader();
 
-            listadoSucursales.Add(new Sucursal(0, "Seleccione una agencia", 0, 0));
+            listadoSucursales.Add(new Sucursal(0, "Seleccione", 0, 0));
             while (dr.Read())
             {
                 var suc = dr["SUCURSAL"];
@@ -64,19 +65,24 @@ namespace Web_Sorteo_Agencias.Config
             List<Socio> listadoSociosRegistrados = new List<Socio>();
             OracleConnection con = new OracleConnection(oradb_DESA);
             OracleCommand cmd = new OracleCommand();
-            cmd.CommandText = $"SELECT * FROM FBS_RIFAS.TEMP_SORTEO_AGENCIAS WHERE SUCURSAL={codigo} ORDER BY SECUENCIAL";
+            cmd.CommandText = $@"SELECT A.*, d.NOMBRE NOMBRESUCURSAL FROM FBS_RIFAS.TEMP_SORTEO_AGENCIAS a
+                    INNER JOIN FBS_ORGANIZACIONES.OFICINA o ON o.SECUENCIALDIVISION = a.SUCURSAL
+                    INNER JOIN FBS_GENERALES.DIVISION d ON d.SECUENCIAL = o.SECUENCIALDIVISION 
+                    ORDER BY a.SECUENCIAL";
             cmd.Connection = con;
             con.Open();
             OracleDataReader qr = cmd.ExecuteReader();
             while (qr.Read())
             {
+                var sec = Convert.ToInt32(qr["SECUENCIAL"]);
                 var numsoc = qr["NUMEROSOCIO"].ToString();
                 var soc = qr["NOMBRESOCIO"].ToString();
                 var nomcuenta = qr["NOMBRECUENTA"].ToString();
                 var ced = qr["CEDULA"].ToString()!;
                 var est = qr["ESTADO"].ToString()!;
+                var nomsuc = qr["NOMBRESUCURSAL"].ToString()!;
                 var suc = Convert.ToInt32(qr["SUCURSAL"]);
-                listadoSociosRegistrados.Add(new Socio(numsoc, soc, nomcuenta, ced, est));
+                listadoSociosRegistrados.Add(new Socio(sec,numsoc, soc, nomcuenta, ced, est, nomsuc, suc));
 
             }
             return listadoSociosRegistrados;
@@ -100,7 +106,7 @@ namespace Web_Sorteo_Agencias.Config
             listadoSocios.Clear();
             OracleConnection con = new OracleConnection(oradb_DESA);
             OracleCommand cmd = new OracleCommand();
-            cmd.CommandText = $@"SELECT c2.NUMEROCLIENTE NUMSOCIO, p.NOMBREUNIDO SOCIO, cp.NOMBRECUENTA NOMBRECUENTA, p.IDENTIFICACION CEDULA, 1 SUCURSAL
+            cmd.CommandText = $@"SELECT c2.NUMEROCLIENTE NUMSOCIO, c.CODIGO SOCIO, cp.NOMBRECUENTA NOMBRECUENTA, p.IDENTIFICACION CEDULA, C.SECUENCIALOFICINA SUCURSAL
                     FROM FBS_CAPTACIONESVISTA.CUENTAMAESTRO c 
                     INNER JOIN FBS_CAPTACIONESVISTA.CUENTAMAESTRO_PERSONALIZADO cp ON CP.SECUENCIALCUENTA = C.SECUENCIAL 
                     INNER JOIN FBS_CLIENTES.CLIENTE c2 ON C2.SECUENCIAL = C.SECUENCIALCLIENTEPRINCIPAL 
@@ -138,7 +144,7 @@ namespace Web_Sorteo_Agencias.Config
                 var socioAleatorio = listadoSocios[indexBtn];
                 OracleConnection con2 = new OracleConnection(oradb_DESA);
                 OracleCommand cmd2 = new OracleCommand();
-                cmd2.CommandText = $"INSERT INTO FBS_RIFAS.TEMP_SORTEO_AGENCIAS VALUES (0,'{socioAleatorio.NumeroSocio}', '{socioAleatorio.NombreSocio}', '{socioAleatorio.NombreCuenta}', '{socioAleatorio.Cedula}', '{socioAleatorio.FechaActualizacion}', 'Descartado', {sucursal})";
+                cmd2.CommandText = $"INSERT INTO FBS_RIFAS.TEMP_SORTEO_AGENCIAS VALUES (0,'{socioAleatorio.NumeroSocio}', '{socioAleatorio.NombreSocio}', '{socioAleatorio.NombreCuenta}', '{socioAleatorio.Cedula}', '{socioAleatorio.FechaActualizacion}', 'Descartado', {socioAleatorio.Sucursal})";
                 cmd2.Connection = con2;
                 con2.Open();
                 OracleDataReader dr2 = cmd2.ExecuteReader();
@@ -150,11 +156,11 @@ namespace Web_Sorteo_Agencias.Config
             return listadoSociosSeleccionados;
         }
 
-        public bool GuardarGanadorAgencia(long codigo, string numeroSocio)
+        public bool GuardarGanadorAgencia(long codigo)
         {
             OracleConnection con = new OracleConnection(oradb_DESA);
             OracleCommand cmd = new OracleCommand();
-            cmd.CommandText = $"UPDATE FBS_RIFAS.TEMP_SORTEO_AGENCIAS SET ESTADO='Ganador' WHERE SUCURSAL = {codigo} AND NUMEROSOCIO = '{numeroSocio}'";
+            cmd.CommandText = $"UPDATE FBS_RIFAS.TEMP_SORTEO_AGENCIAS SET ESTADO='Ganador' WHERE SECUENCIAL = {codigo}";
             cmd.Connection = con;
             con.Open();
             OracleDataReader dr = cmd.ExecuteReader();

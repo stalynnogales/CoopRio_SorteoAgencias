@@ -9,7 +9,7 @@
 }
 
 <div class="text-center">
-    <p class="h2 mb-3" style="color:#09467C">SORTEO AGENCIAS @DateTime.Now.Year</p>
+    <p class="h2 mb-3" style="color:#09467C">SORTEO OFICINAS @DateTime.Now.Year</p>
     <div class="container">
         <div class="row justify-content-center d-flex mb-3">
             <div class="col-lg-4 col-md-8">
@@ -63,7 +63,8 @@
                                 <button onclick="BuscarSocio()" class="btn btn-success px-4 btn-lg rounded-pill">Aceptar</button><br>
                             </div>
                             <div id="btn-funcionFin" style="display:none">
-                                <input id="ganSucural" hidden />
+                                <input id="ganSucural" hidden /> 
+                                <input id="numSecuencial" hidden/>
                                 <button onclick="DefinirGanador()" class="btn btn-primary px-4 rounded-pill">Finalizar</button><br>
                             </div>
                         </div>
@@ -77,13 +78,14 @@
                                     <p class="m-0 p-0" id="nombreSocio"></p>
                                     <p class="m-0 p-0" id="cedulaGanador"></p>
                                     <p class="m-0 p-0" id="numeroGanador"></p>
+                                    <p class="m-0 p-0" id="nombreAgencia"></p>
                                 </div>
                             </div>
                         </div>
 
                         @if (ViewBag.sucursal is null)
                         {
-                            <p id="msg-init" class="text-secondary h2">Seleccione una agencia</p>
+                            <p id="msg-init" class="text-secondary h2">Seleccione</p>
                         }
                     </div>
                 </div>
@@ -96,11 +98,11 @@
                         <table class="table small" id="tablaSocios" style="display:none">
                             <thead>
                                 <tr style="color:#09467C">
-                                    <th>Infante</th>
-                                    <th>Socio</th>
-                                    <th>Cedula</th>
-                                    <th>N° Socio</th>
-                               @*      <th width="120">F. Act</th> *@
+                                    <th>Nombre</th>
+                                    <th>Cuenta</th>
+                                    <th>Cédula</th>
+                                    @* <th>N° Socio</th> *@
+                                    @* <th width="120">F. Act</th> *@
                                 </tr>
                             </thead>
                             <tbody style="font-size:14px;">
@@ -129,7 +131,6 @@
             data: { codigo: val },
             traditional: true,
             success: function (response) {
-                console.log(response)
                 $("#spinner").hide();
                 $("#nombreSucursal").append(response.sucursal.descripcion.toUpperCase());
                 $("#numeroSocios").append(response.sucursal.numero);
@@ -147,7 +148,6 @@
     function BuscarSocio() {
         var codigosuc = $('#sucursalesDropdown').val();
         if (codigosuc == 0) return;
-        console.log(codigosuc)
         $("#tablaSocios").hide();
         $("#spinnerTabla").show();
         $.ajax({
@@ -156,25 +156,23 @@
             data: { codigo: codigosuc },
             traditional: true,
             success: function (response) {
-                console.log(response);
                 $("#spinnerTabla").hide();
                 PintarDatosTabla(response);
                 $("#btn-funcionFin").show();
                 $("#ganSucural").val(response[response.length - 1].numeroSocio);
+                $("#numSecuencial").val(response[response.length - 1].secuencial);
             }
         });
     }
 
     function PintarDatosTabla(listaSocios) {
-        console.log(listaSocios)
         document.getElementById("tablaSocios").querySelector("tbody").innerHTML = "";
         $.each(listaSocios, function (index, socio) {
-            console.log(socio.fechaActualizacion)
             var fila = $('<tr>').append(
                 $('<td>').text(socio.nombreCuenta),
-                $('<td>').text(socio.nombreSocio),
-                $('<td>').text(socio.cedula),
-                $('<td>').text(socio.numeroSocio),
+                $('<td>').text(Mascara(socio.nombreSocio)),
+                $('<td>').text(Mascara(socio.cedula)),
+                //$('<td>').text(socio.numeroSocio),
                 // $('<td>').text(socio.fechaActualizacion),
             );
             if (socio.estado === 'Ganador') {
@@ -193,25 +191,27 @@
             $("#nombreGanador").empty();
             $("#nombreGanador").append(socioga.nombreCuenta);
             $("#cedulaGanador").empty();
-            $("#cedulaGanador").append('Cédula: ' + socioga.cedula);
+            $("#cedulaGanador").append('Cédula: ' + Mascara(socioga.cedula));
             $("#numeroGanador").empty();
-            $("#numeroGanador").append('Número socio: ' + socioga.numeroSocio);
+            $("#numeroGanador").append('Número socio: ' + Mascara(socioga.numeroSocio));
             $("#nombreSocio").empty();
-            $("#nombreSocio").append('Titular: ' + socioga.nombreSocio);
+            $("#nombreSocio").append('Cuenta: ' + Mascara(socioga.nombreSocio));            
+            $("#nombreAgencia").empty();
+            $("#nombreAgencia").append('Oficina: ' + socioga.nombreSucursal);
         }
     }
 
     function DefinirGanador() {
         $("#btn-funcion").hide();
         $("#btn-funcionFin").hide();
-        var codigosuc = $('#sucursalesDropdown').val();
+        var codigosuc = $('#numSecuencial').val();
         var numClienteGanador = $('#ganSucural').val();
         if (codigosuc == 0) return;
-        console.log(codigosuc, numClienteGanador);
+        console.log(codigosuc);
         $.ajax({
             url: "@Url.Action("guardarGanador", "Home")",
             type: "post",
-            data: { codigo: codigosuc, numclgan: numClienteGanador },
+            data: { codigo: codigosuc },
             traditional: true,
             success: function (response) {
                 console.log('ok',response);
@@ -220,5 +220,15 @@
                 }
             }
         });
+    }
+
+    function Mascara(texto){
+        if (!texto || texto.length <= 4) {
+            return 'X'.repeat(texto.length);
+        }
+
+        const start = texto.slice(0, -4);
+        const xPart = 'X'.repeat(4);
+        return start + xPart;
     }
 </script>
