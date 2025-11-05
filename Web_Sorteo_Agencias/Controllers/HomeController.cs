@@ -23,7 +23,7 @@ namespace Web_Sorteo_Agencias.Controllers
             var listSucursales = Sucursales.Select(x => new SelectListItem
             {
                 Text = $"{x.DESCRIPCION}",
-                Value = x.SUCURSAL.ToString(),
+                Value = $"{x.SUCURSAL.ToString()}-{x.TIPO.ToString()}",
                 Disabled = x.SUCURSAL.Equals(0),
                 Selected = x.SUCURSAL.Equals(0),
             });
@@ -36,32 +36,32 @@ namespace Web_Sorteo_Agencias.Controllers
         }
 
         [HttpPost]
-        public ActionResult sucursalSelected(int codigo)
+        public ActionResult sucursalSelected(int codigo, int tipo)
         {
-            var sucursal = _repos.BuscarSucursal(codigo);
-            IEnumerable<Socio> sociosRegistrados = _repos.BuscarSociosSucursales(codigo);
+            var sucursal = _repos.BuscarSucursal(codigo, tipo);
+            IEnumerable<Socio> sociosRegistrados = _repos.BuscarSociosSucursales(codigo, tipo);
 
             var result = new { sucursal, sociosRegistrados };
             return Json(result);
         }
 
         [HttpPost]
-        public ActionResult seleccionAleatoria(int codigo)
+        public ActionResult seleccionAleatoria(int codigo, int tipo)
         {
-            var sucursal = _repos.ActualizarEstadosucursal(codigo);
+            var sucursal = _repos.ActualizarEstadosucursal(codigo, tipo);
 
             IEnumerable<Sucursal> Sucursales = _repos.ListadoSucursales();
             var listSucursales = Sucursales.Select(x => new SelectListItem
             {
                 Text = $"{x.DESCRIPCION}",
-                Value = x.SUCURSAL.ToString(),
+                Value = $"{x.SUCURSAL.ToString()}-{x.TIPO.ToString()}",
                 Disabled = x.SUCURSAL.Equals(0),
                 Selected = x.SUCURSAL.Equals(codigo),
             });
             ViewBag.sucursales = listSucursales;
             ViewBag.sucursal = sucursal;
 
-            IEnumerable<Socio> Socios = (IEnumerable<Socio>)_repos.ListadoSociosSucursal(codigo);
+            IEnumerable<Socio> Socios = (IEnumerable<Socio>)_repos.ListadoSociosSucursal(codigo,tipo);
             ViewBag.sociosseleccionados = Socios;
             ViewBag.totalsocios = Socios.Count();
 
@@ -69,10 +69,10 @@ namespace Web_Sorteo_Agencias.Controllers
         }
 
         [HttpPost]
-        public ActionResult guardarGanador(int codigo, string numclgan )
+        public ActionResult guardarGanador(int codigo, string numclgan, int tipo)
         {
-            var correcto = _repos.GuardarGanadorAgencia(codigo, numclgan);
-            IEnumerable<Socio> Socios = _repos.BuscarSociosSucursales(codigo);
+            var correcto = _repos.GuardarGanadorAgencia(codigo, numclgan, tipo);
+            IEnumerable<Socio> Socios = _repos.BuscarSociosSucursales(codigo, tipo);
             return Json(Socios);
         }
 
