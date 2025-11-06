@@ -9,7 +9,7 @@
 }
 
 <div class="text-center">
-	<p class="h2 mb-3" style="color:#09467C">SORTEO OFICINAS @DateTime.Now.Year</p>
+	<p class="h2 mb-3" style="color:#09467C">SORTEO CANALES DIGITALES @DateTime.Now.Year</p>
 	<div class="container">
 		<div class="row justify-content-center d-flex mb-3">
 			<div class="col-lg-4 col-md-8">
@@ -173,7 +173,7 @@
 			var fila = $('<tr>').append(
 				$('<td>').text(socio.nombreSocio),
 				$('<td>').text(Mascara(socio.cedula)),
-				$('<td>').text(Mascara(socio.numeroSocio)),
+				$('<td>').text(socio.numeroSocio),
 				$('<td>').text(socio.detalle),
 			);
 			if (socio.estado === 'Ganador') {
@@ -194,7 +194,7 @@
 			$("#cedulaGanador").empty();
 			$("#cedulaGanador").append('Cédula: ' + Mascara(socioga.cedula));
 			$("#numeroGanador").empty();
-			$("#numeroGanador").append('Número socio: ' + Mascara(socioga.numeroSocio));
+			$("#numeroGanador").append('Número socio: ' + socioga.numeroSocio);
 		}
 	}
 

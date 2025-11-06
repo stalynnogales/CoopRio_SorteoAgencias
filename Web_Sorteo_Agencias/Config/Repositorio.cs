@@ -5,9 +5,8 @@ namespace Web_Sorteo_Agencias.Config
 {
     public class Repositorio
     {
-        string oradb_PROD = "DATA SOURCE=192.168.1.194:1521/topazpro;PASSWORD=;USER ID=RIOBAMBA;PERSIST SECURITY INFO=True;";
-        string oradb_DESA = "DATA SOURCE=10.200.50.137:1521/desarrollo;PASSWORD=sifizsoft;USER ID=system;PERSIST SECURITY INFO=True;";
-        //string oradb_DESA = "DATA SOURCE=10.200.50.31:1521/FINANCIAL;PASSWORD=sifizsoft;USER ID=system;PERSIST SECURITY INFO=True;";
+        //string oradb_DESA = "DATA SOURCE=10.200.50.137:1521/desarrollo;PASSWORD=sifizsoft;USER ID=system;PERSIST SECURITY INFO=True;";
+        string oradb_DESA = "DATA SOURCE=10.200.50.31:1521/FINANCIAL;PASSWORD=sifizsoft;USER ID=system;PERSIST SECURITY INFO=True;";
 
         private List<Sucursal> listadoSucursales = new List<Sucursal>();
 
@@ -19,8 +18,6 @@ namespace Web_Sorteo_Agencias.Config
         {
             OracleConnection con = new OracleConnection(oradb_DESA);
             OracleCommand cmd = new OracleCommand();
-            //cmd.CommandText = "SELECT * from SUCURSALESSC WHERE SUCURSAL NOT IN(99,20) ORDER BY SUCURSAL";
-            //cmd.CommandText = $"SELECT S.DESCRIPCION, C.C1960 SUCURSAL, COUNT(*) NUMEROSOCIOS FROM CL_CLIENTES C, CL_CLIENTPERSONA CP, SUCURSALESSC S WHERE S.SUCURSAL=C.C1960 AND C.C0902=CP.C1430 AND C.C1038='V' AND C.C1069>= TO_DATE('{fechaInicial}','DD/MM/YYYY') AND C.C1069<= TO_DATE('{fechaFinal}','DD/MM/YYYY') GROUP BY S.DESCRIPCION, C.C1960 HAVING C.C1960 NOT IN(99) ORDER BY C.C1960";
             cmd.CommandText = $@"SELECT 
                         sub.SECUENCIALOFICINA SECUENCIALDIVISION,
                         CONCAT(sub.NOMBRE, ' TRANSACCIÓN CANALES') NOMBRE,
