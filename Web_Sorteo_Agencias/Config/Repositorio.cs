@@ -20,7 +20,7 @@ namespace Web_Sorteo_Agencias.Config
             OracleCommand cmd = new OracleCommand();
             cmd.CommandText = $@"SELECT 
                         sub.SECUENCIALOFICINA SECUENCIALDIVISION,
-                        CONCAT(sub.NOMBRE, ' TRANSACCIÓN CANALES') NOMBRE,
+                        (sub.NOMBRE || ' TRANSACCIÓN CANALES') AS NOMBRE,
                         COUNT(*) AS NUMERO_SOCIOS,
                         1 AS TIPO
                     FROM (
@@ -39,8 +39,8 @@ namespace Web_Sorteo_Agencias.Config
 		                    INNER JOIN FBS_PERSONAS.PERSONA p ON p.SECUENCIAL = c2.SECUENCIALPERSONA
 		                    WHERE 
 		                        mv.CODIGOUSUARIO = 'canal.digital'
-		                        AND mv.VALOR NOT IN ('0.36','0.31','0.05')
-		                        AND o.SECUENCIALDIVISION NOT IN (69483,69484)
+		                        AND mv.VALOR NOT IN (0.36,0.31,0.05)
+		                        AND o.SECUENCIALDIVISION NOT IN (69483,69484,69482,69481,69479,69475)
 		                        AND mv.FECHAMOVIMIENTO BETWEEN TO_DATE('2025-10-01', 'YYYY-MM-DD')
 		                                                   AND TO_DATE('2025-10-31', 'YYYY-MM-DD')
 		                        AND NOT EXISTS (
@@ -61,7 +61,7 @@ namespace Web_Sorteo_Agencias.Config
                     UNION ALL
                     SELECT 
                          D.SECUENCIAL SECUENCIALDIVISION,
-                         CONCAT(d.NOMBRE, ' ACTIVACIÓN CANALES') NOMBRE,
+                         (d.NOMBRE || ' ACTIVACIÓN CANALES') AS NOMBRE,
                          COUNT(DISTINCT C2.SECUENCIAL) AS NUMERO_SOCIOS,
                          2 AS TIPO
 	                    FROM FBS_CLIENTES.CLIENTEREGISTROCANALESDIGITALES C
@@ -190,7 +190,7 @@ namespace Web_Sorteo_Agencias.Config
 	                        INNER JOIN FBS_PERSONAS.PERSONA p ON p.SECUENCIAL = c2.SECUENCIALPERSONA
 	                        WHERE 
 	                            mv.CODIGOUSUARIO = 'canal.digital'
-	                            AND mv.VALOR NOT IN ('0.36','0.31','0.05')
+	                            AND mv.VALOR NOT IN (0.36,0.31,0.05)
 	                            AND d.SECUENCIAL NOT IN (69483,69484)
     	                        AND d.SECUENCIAL = {sucursal}
 	                            AND mv.FECHAMOVIMIENTO BETWEEN TO_DATE('2025-10-01', 'YYYY-MM-DD')
