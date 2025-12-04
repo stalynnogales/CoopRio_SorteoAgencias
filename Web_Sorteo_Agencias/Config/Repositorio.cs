@@ -11,8 +11,8 @@ namespace Web_Sorteo_Agencias.Config
         private List<Sucursal> listadoSucursales = new List<Sucursal>();
 
         // Rango de fechas
-        public string fechaInicial = "2025-10-01";
-        public string fechaFinal = "2025-10-31";
+        public string fechaInicial = "2025-11-01";
+        public string fechaFinal = "2025-11-30";
 
         public Repositorio()
         {
@@ -40,9 +40,9 @@ namespace Web_Sorteo_Agencias.Config
 		                    WHERE 
 		                        mv.CODIGOUSUARIO = 'canal.digital'
 		                        AND mv.VALOR NOT IN (0.36,0.31,0.05)
-		                        AND o.SECUENCIALDIVISION NOT IN (69483,69484,69482,69481,69479,69475)
-		                        AND mv.FECHAMOVIMIENTO BETWEEN TO_DATE('2025-10-01', 'YYYY-MM-DD')
-		                                                   AND TO_DATE('2025-10-31', 'YYYY-MM-DD')
+		                        AND o.SECUENCIALDIVISION NOT IN (69483,69484)
+		                        AND mv.FECHAMOVIMIENTO BETWEEN TO_DATE('2025-11-01', 'YYYY-MM-DD')
+		                                                   AND TO_DATE('2025-11-30', 'YYYY-MM-DD')
 		                        AND NOT EXISTS (
 		                            SELECT 1 
 		                            FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
@@ -74,8 +74,8 @@ namespace Web_Sorteo_Agencias.Config
 	                    WHERE 
 	                        (C.ESPARAMOVIL <> 0 OR C.ESPARAWEB <> 0)
 	                        AND D.SECUENCIAL NOT IN (69483,69484)
-	                        AND C.FECHASISTEMA BETWEEN TO_DATE('2025-10-01', 'YYYY-MM-DD') 
-	                                                 AND TO_DATE('2025-10-31', 'YYYY-MM-DD')
+	                        AND C.FECHASISTEMA BETWEEN TO_DATE('2025-11-01', 'YYYY-MM-DD') 
+	                                                 AND TO_DATE('2025-11-30', 'YYYY-MM-DD')
                         AND NOT EXISTS (
                             SELECT 1 
                             FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO UC
@@ -193,8 +193,8 @@ namespace Web_Sorteo_Agencias.Config
 	                            AND mv.VALOR NOT IN (0.36,0.31,0.05)
 	                            AND d.SECUENCIAL NOT IN (69483,69484)
     	                        AND d.SECUENCIAL = {sucursal}
-	                            AND mv.FECHAMOVIMIENTO BETWEEN TO_DATE('2025-10-01', 'YYYY-MM-DD')
-	                                                       AND TO_DATE('2025-10-31', 'YYYY-MM-DD')
+	                            AND mv.FECHAMOVIMIENTO BETWEEN TO_DATE('2025-11-01', 'YYYY-MM-DD')
+	                                                       AND TO_DATE('2025-11-30', 'YYYY-MM-DD')
 	                            AND NOT EXISTS (
 	                                SELECT 1 
 	                                FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
@@ -231,8 +231,8 @@ namespace Web_Sorteo_Agencias.Config
                                 (C.ESPARAMOVIL <> 0 OR C.ESPARAWEB <> 0)
                                 AND d.SECUENCIAL NOT IN (69483,69484)
                                 AND d.SECUENCIAL = {sucursal}
-                                AND C.FECHASISTEMA BETWEEN TO_DATE('2025-10-01', 'YYYY-MM-DD') 
-                                                         AND TO_DATE('2025-10-31', 'YYYY-MM-DD')
+                                AND C.FECHASISTEMA BETWEEN TO_DATE('2025-11-01', 'YYYY-MM-DD') 
+                                                         AND TO_DATE('2025-11-30', 'YYYY-MM-DD')
                                 AND NOT EXISTS (
                                     SELECT 1 
                                     FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO UC
