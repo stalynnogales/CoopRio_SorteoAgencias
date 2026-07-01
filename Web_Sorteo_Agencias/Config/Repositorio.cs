@@ -18,72 +18,35 @@ namespace Web_Sorteo_Agencias.Config
         {
             OracleConnection con = new OracleConnection(oradb_DESA);
             OracleCommand cmd = new OracleCommand();
-            cmd.CommandText = $@"SELECT 
-                        sub.SECUENCIALOFICINA SECUENCIALDIVISION,
-                        (sub.NOMBRE || ' TRANSACCIÓN CANALES') AS NOMBRE,
-                        COUNT(*) AS NUMERO_SOCIOS,
-                        1 AS TIPO
-                    FROM (
-                        SELECT 
-                        c.SECUENCIALOFICINA,
-                        c.SECUENCIALCLIENTEPRINCIPAL,
-                        p.NOMBREUNIDO , p.IDENTIFICACION,
-                        c2.NUMEROCLIENTE,
-                        COUNT(*) AS TOTAL_MOVIMIENTOS,
-                        d.NOMBRE
-		                    FROM FBS_CAPTACIONESVISTA.MOVIMIENTOCUENTACOMP_VISTA mv
-		                    INNER JOIN FBS_CAPTACIONESVISTA.CUENTAMAESTRO c ON c.SECUENCIAL = mv.SECUENCIALCUENTA
-		                    INNER JOIN FBS_ORGANIZACIONES.OFICINA o ON o.SECUENCIALDIVISION = c.SECUENCIALOFICINA
-		                    INNER JOIN FBS_GENERALES.DIVISION d ON d.SECUENCIAL = o.SECUENCIALDIVISION
-		                    INNER JOIN fbs_clientes.CLIENTE c2 ON c2.SECUENCIAL = c.SECUENCIALCLIENTEPRINCIPAL
-		                    INNER JOIN FBS_PERSONAS.PERSONA p ON p.SECUENCIAL = c2.SECUENCIALPERSONA
-		                    WHERE 
-		                        mv.CODIGOUSUARIO = 'canal.digital'
-		                        AND mv.VALOR NOT IN (0.36,0.31,0.05)
-		                        AND o.SECUENCIALDIVISION NOT IN (69483,69484,69482,69481,69479,69475)
-		                        AND mv.FECHAMOVIMIENTO BETWEEN TO_DATE('2025-11-01', 'YYYY-MM-DD')
-		                                                   AND TO_DATE('2025-11-30', 'YYYY-MM-DD')
-		                        AND NOT EXISTS (
-		                            SELECT 1 
-		                            FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
-		                            WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
-		                        )
-		                    GROUP BY 
-		                        c.SECUENCIALOFICINA, 
-		                        c.SECUENCIALCLIENTEPRINCIPAL,
-		                        p.NOMBREUNIDO , p.IDENTIFICACION,
-		                        c2.NUMEROCLIENTE, 
-		                        d.NOMBRE
-		                    HAVING 
-		                        COUNT(*) > 10
-                    ) sub
-                    GROUP BY sub.SECUENCIALOFICINA, sub.NOMBRE
-                    UNION ALL
-                    SELECT 
-                         D.SECUENCIAL SECUENCIALDIVISION,
-                         (d.NOMBRE || ' ACTIVACIÓN CANALES') AS NOMBRE,
-                         COUNT(DISTINCT C2.SECUENCIAL) AS NUMERO_SOCIOS,
-                         2 AS TIPO
-	                    FROM FBS_CLIENTES.CLIENTEREGISTROCANALESDIGITALES C
-	                    INNER JOIN FBS_CLIENTES.CLIENTE C2 ON C2.SECUENCIAL = C.SECUENCIALCLIENTE
-	                    INNER JOIN FBS_PERSONAS.PERSONA P ON P.SECUENCIAL = C2.SECUENCIALPERSONA 
-	                    LEFT JOIN FBS_INTERNETHUB.USUARIO IU ON IU.IDENTIFICACION = P.IDENTIFICACION 
-	                    INNER JOIN FBS_CAPTACIONESVISTA.CUENTAMAESTRO C3 ON C3.SECUENCIALCLIENTEPRINCIPAL = C2.SECUENCIAL 
-	                    INNER JOIN FBS_SEGURIDADES.USUARIO U ON U.CODIGO = C.CODIGOUSUARIO 
-	                    INNER JOIN FBS_GENERALES.DIVISION D ON D.SECUENCIAL = U.SECUENCIALOFICINA 
-	                    WHERE 
-	                        (C.ESPARAMOVIL <> 0 OR C.ESPARAWEB <> 0)
-	                        AND D.SECUENCIAL NOT IN (69483,69484)
-	                        AND C.FECHASISTEMA BETWEEN TO_DATE('2025-11-01', 'YYYY-MM-DD') 
-	                                                 AND TO_DATE('2025-11-30', 'YYYY-MM-DD')
-                        AND NOT EXISTS (
-                            SELECT 1 
-                            FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO UC
-                            WHERE UC.SECUENCIALPERSONA = P.SECUENCIAL
-                        )
-                    GROUP BY 
-                        D.NOMBRE, D.SECUENCIAL
-                    ORDER BY SECUENCIALDIVISION, TIPO";
+
+            cmd.CommandText = $@"WITH OFICINAS AS (
+                SELECT
+                    CASE
+                        WHEN r.SECUENCIALOFICINA IN (1,27885,27886,69480,69477) THEN 'OFICINAS RIOBAMBA'
+                        WHEN r.SECUENCIALOFICINA IN (69473,65907,69474,69478) THEN 'OFICINAS CHIMBORAZO'
+                        WHEN r.SECUENCIALOFICINA IN (69482,69481,69476) THEN 'OFICINAS QUITO'
+                        WHEN r.SECUENCIALOFICINA IN (69475,69479) THEN 'OFICINAS CUENCA'
+                        ELSE 'OTRAS'
+                    END AS NOMBRE,
+                    CASE
+                        WHEN r.SECUENCIALOFICINA IN (1,27885,27886,69480,69477) THEN 1
+                        WHEN r.SECUENCIALOFICINA IN (69473,65907,69474,69478) THEN 2
+                        WHEN r.SECUENCIALOFICINA IN (69482,69481,69476) THEN 3
+                        WHEN r.SECUENCIALOFICINA IN (69475,69479) THEN 4
+                        ELSE 0
+                    END AS TIPO
+                FROM FBS_RIFAS.RIFAMAESTRO r
+                WHERE r.SECUENCIALCONFIGURACIONRIFA = 21
+            )
+            SELECT 
+	            TIPO AS SECUENCIALDIVISION,
+                NOMBRE,
+                COUNT(*) AS NUMERO_SOCIOS,
+                TIPO
+            FROM OFICINAS
+            GROUP BY NOMBRE, TIPO
+            ORDER BY TIPO";
+
             cmd.Connection = con;
             con.Open();
             OracleDataReader dr = cmd.ExecuteReader();
@@ -172,75 +135,78 @@ namespace Web_Sorteo_Agencias.Config
             OracleConnection con = new OracleConnection(oradb_DESA);
             OracleCommand cmd = new OracleCommand();
 
-            if(tipo == 1)
-            {
-                cmd.CommandText = $@"SELECT 
-                                    c.SECUENCIALOFICINA SUCURSAL,
-                                    c.SECUENCIALCLIENTEPRINCIPAL,
-                                    p.NOMBREUNIDO SOCIO,
-                                    p.IDENTIFICACION CEDULA,
-                                    c2.NUMEROCLIENTE NUMSOCIO,
-                                    COUNT(*) AS DETALLE,
-                                    d.NOMBRE NOMBRESUCURSAL
-	                        FROM FBS_CAPTACIONESVISTA.MOVIMIENTOCUENTACOMP_VISTA mv
-	                        INNER JOIN FBS_CAPTACIONESVISTA.CUENTAMAESTRO c ON c.SECUENCIAL = mv.SECUENCIALCUENTA
-	                        INNER JOIN FBS_ORGANIZACIONES.OFICINA o ON o.SECUENCIALDIVISION = c.SECUENCIALOFICINA
-	                        INNER JOIN FBS_GENERALES.DIVISION d ON d.SECUENCIAL = o.SECUENCIALDIVISION
-	                        INNER JOIN fbs_clientes.CLIENTE c2 ON c2.SECUENCIAL = c.SECUENCIALCLIENTEPRINCIPAL
-	                        INNER JOIN FBS_PERSONAS.PERSONA p ON p.SECUENCIAL = c2.SECUENCIALPERSONA
-	                        WHERE 
-	                            mv.CODIGOUSUARIO = 'canal.digital'
-	                            AND mv.VALOR NOT IN (0.36,0.31,0.05)
-	                            AND d.SECUENCIAL NOT IN (69483,69484)
-    	                        AND d.SECUENCIAL = {sucursal}
-	                            AND mv.FECHAMOVIMIENTO BETWEEN TO_DATE('2025-11-01', 'YYYY-MM-DD')
-	                                                       AND TO_DATE('2025-11-30', 'YYYY-MM-DD')
-	                            AND NOT EXISTS (
-	                                SELECT 1 
-	                                FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
-	                                WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
-	                            )
-	                        GROUP BY 
-	                            c.SECUENCIALOFICINA, 
-	                            c.SECUENCIALCLIENTEPRINCIPAL,
-	                            p.NOMBREUNIDO , p.IDENTIFICACION,
-	                            c2.NUMEROCLIENTE, 
-	                            d.NOMBRE
-	                        HAVING 
-	                            COUNT(*) > 10";
-            }
+            cmd.CommandText = $@"SELECT
+		            r.SECUENCIALOFICINA AS SUCURSAL,
+		            r.SECUENCIALCLIENTEPRINCIPAL,
+		            cp.NOMBRECUENTA AS SOCIO,
+		            p.IDENTIFICACION  AS CEDULA,
+		            c.NUMEROCLIENTE AS NUMSOCIO,
+		            r.MONTO AS DETALLE,
+		            P.NOMBREUNIDO NOMBRESUCURSAL
+		            --R.NUMEROCUENTA
+	            FROM FBS_RIFAS.RIFAMAESTRO r 
+	            INNER JOIN FBS_CLIENTES.CLIENTE c ON c.SECUENCIAL = r.SECUENCIALCLIENTEPRINCIPAL 
+	            INNER JOIN FBS_PERSONAS.PERSONA p ON p.SECUENCIAL = c.SECUENCIALPERSONA 
+	            INNER JOIN FBS_GENERALES.DIVISION d ON d.SECUENCIAL = r.SECUENCIALOFICINA 
+	            INNER JOIN FBS_CAPTACIONESVISTA.CUENTAMAESTRO c2 ON C2.CODIGO = R.NUMEROCUENTA 
+	            INNER JOIN FBS_CAPTACIONESVISTA.CUENTAMAESTRO_PERSONALIZADO cp ON CP.SECUENCIALCUENTA = C2.SECUENCIAL
+	            WHERE r.SECUENCIALCONFIGURACIONRIFA = 21
+	            AND (
+				    ({sucursal} = 1 AND r.SECUENCIALOFICINA IN (1,27885,27886,69480,69477))
+				 OR ({sucursal} = 2 AND r.SECUENCIALOFICINA IN (69473,65907,69474,69478))
+				 OR ({sucursal} = 3 AND r.SECUENCIALOFICINA IN (69482,69481,69476))
+				 OR ({sucursal} = 4 AND r.SECUENCIALOFICINA IN (69475,69479))
+				)";
 
-            if(tipo == 2)
-            {
-                cmd.CommandText = $@"SELECT 
-                                 DISTINCT C2.SECUENCIAL,
-                                 p.NOMBREUNIDO SOCIO,
-                                 p.IDENTIFICACION CEDULA,
-                                 c2.NUMEROCLIENTE NUMSOCIO,
-                                 d.SECUENCIAL SUCURSAL,
-                                 D.NOMBRE NOMBRESUCURSAL,
-                                 C.FECHAMAQUINA DETALLE
-                            FROM FBS_CLIENTES.CLIENTEREGISTROCANALESDIGITALES C
-                            INNER JOIN FBS_CLIENTES.CLIENTE C2 ON C2.SECUENCIAL = C.SECUENCIALCLIENTE
-                            INNER JOIN FBS_PERSONAS.PERSONA P ON P.SECUENCIAL = C2.SECUENCIALPERSONA 
-                            LEFT JOIN FBS_INTERNETHUB.USUARIO IU ON IU.IDENTIFICACION = P.IDENTIFICACION 
-                            INNER JOIN FBS_CAPTACIONESVISTA.CUENTAMAESTRO C3 ON C3.SECUENCIALCLIENTEPRINCIPAL = C2.SECUENCIAL 
-                            INNER JOIN FBS_SEGURIDADES.USUARIO U ON U.CODIGO = C.CODIGOUSUARIO 
-                            INNER JOIN FBS_GENERALES.DIVISION D ON D.SECUENCIAL = U.SECUENCIALOFICINA 
-                            WHERE 
-                                (C.ESPARAMOVIL <> 0 OR C.ESPARAWEB <> 0)
-                                AND d.SECUENCIAL NOT IN (69483,69484)
-                                AND d.SECUENCIAL = {sucursal}
-                                AND C.FECHASISTEMA BETWEEN TO_DATE('2025-11-01', 'YYYY-MM-DD') 
-                                                         AND TO_DATE('2025-11-30', 'YYYY-MM-DD')
-                                AND NOT EXISTS (
-                                    SELECT 1 
-                                    FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO UC
-                                    WHERE UC.SECUENCIALPERSONA = P.SECUENCIAL
-                                )
-                            ORDER BY 
-                                c2.SECUENCIAL";
-            }
+            //if (tipo == 1)
+            //{
+            //    cmd.CommandText = $@"SELECT
+		          //  r.SECUENCIALOFICINA AS SUCURSAL,
+		          //  r.SECUENCIALCLIENTEPRINCIPAL,
+		          //  p.NOMBREUNIDO AS SOCIO,
+		          //  p.IDENTIFICACION  AS CEDULA,
+		          //  c.NUMEROCLIENTE AS NUMSOCIO,
+		          //  r.MONTO AS DETALLE,
+		          //  d.NOMBRE NOMBRESUCURSAL 
+	           // FROM FBS_RIFAS.RIFAMAESTRO r 
+	           // INNER JOIN FBS_CLIENTES.CLIENTE c ON c.SECUENCIAL = r.SECUENCIALCLIENTEPRINCIPAL 
+	           // INNER JOIN FBS_PERSONAS.PERSONA p ON p.SECUENCIAL = c.SECUENCIALPERSONA 
+	           // INNER JOIN FBS_GENERALES.DIVISION d ON d.SECUENCIAL = r.SECUENCIALOFICINA 
+	           // WHERE r.SECUENCIALCONFIGURACIONRIFA = 20
+	           // AND d.SECUENCIAL = {sucursal}";
+            //}
+
+            //if(tipo == 2)
+            //{
+            //    cmd.CommandText = $@"SELECT 
+            //                     DISTINCT C2.SECUENCIAL,
+            //                     p.NOMBREUNIDO SOCIO,
+            //                     p.IDENTIFICACION CEDULA,
+            //                     c2.NUMEROCLIENTE NUMSOCIO,
+            //                     d.SECUENCIAL SUCURSAL,
+            //                     D.NOMBRE NOMBRESUCURSAL,
+            //                     C.FECHAMAQUINA DETALLE
+            //                FROM FBS_CLIENTES.CLIENTEREGISTROCANALESDIGITALES C
+            //                INNER JOIN FBS_CLIENTES.CLIENTE C2 ON C2.SECUENCIAL = C.SECUENCIALCLIENTE
+            //                INNER JOIN FBS_PERSONAS.PERSONA P ON P.SECUENCIAL = C2.SECUENCIALPERSONA 
+            //                LEFT JOIN FBS_INTERNETHUB.USUARIO IU ON IU.IDENTIFICACION = P.IDENTIFICACION 
+            //                INNER JOIN FBS_CAPTACIONESVISTA.CUENTAMAESTRO C3 ON C3.SECUENCIALCLIENTEPRINCIPAL = C2.SECUENCIAL 
+            //                INNER JOIN FBS_SEGURIDADES.USUARIO U ON U.CODIGO = C.CODIGOUSUARIO 
+            //                INNER JOIN FBS_GENERALES.DIVISION D ON D.SECUENCIAL = U.SECUENCIALOFICINA 
+            //                WHERE 
+            //                    (C.ESPARAMOVIL <> 0 OR C.ESPARAWEB <> 0)
+            //                    AND d.SECUENCIAL NOT IN (69483,69484)
+            //                    AND d.SECUENCIAL = {sucursal}
+            //                    AND C.FECHASISTEMA BETWEEN TO_DATE('2025-11-01', 'YYYY-MM-DD') 
+            //                                             AND TO_DATE('2025-11-30', 'YYYY-MM-DD')
+            //                    AND NOT EXISTS (
+            //                        SELECT 1 
+            //                        FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO UC
+            //                        WHERE UC.SECUENCIALPERSONA = P.SECUENCIAL
+            //                    )
+            //                ORDER BY 
+            //                    c2.SECUENCIAL";
+            //}
 
             cmd.Connection = con;
             con.Open();
