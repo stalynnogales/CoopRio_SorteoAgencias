@@ -60,7 +60,7 @@
 
 						<div class="d-grid gap-2 mx-auto">
 							<div id="btn-funcion" style="display:none">
-								<button onclick="BuscarSocio()" class="btn btn-success px-4 btn-lg rounded-pill">Aceptar</button><br>
+								<button onclick="BuscarSocio()" class="btn btn-success px-4 btn-lg rounded-pill">Buscar ganador</button><br>
 							</div>
 							<div id="btn-funcionFin" style="display:none">
 								<input id="ganSucural" hidden />
@@ -92,6 +92,12 @@
 					<div class="card-header" style="color:#09467C">Socios seleccionados</div>
 					<div class="card-body table-responsive">
 						<i id="spinnerTabla" style="font-size:50px;display:none" class="fas fa-spinner fa-spin fa-lg text-success"></i>
+
+						<div class="d-grid gap-2 mx-auto">
+							<div class="d-grid gap-2 mx-auto" class="mt-5" id="contenedor-ganadores" style="display:none">
+							</div>
+						</div>
+
 						<table class="table small" id="tablaSocios" style="display:none">
 							<thead>
 								<tr style="color:#09467C">
@@ -181,26 +187,47 @@
 			}
 			$('#tablaSocios tbody').append(fila);
 		});
-		$("#tablaSocios").show();
-		var socioga = listaSocios.find(x => x.estado === 'Ganador');
-		if (socioga != undefined) {
-			//Deshabilitar botón de selección
-			$("#btn-funcion").hide();
+		$("#tablaSocios").hide();
+		var sociosGanadores = listaSocios.filter(x => x.estado === 'Ganador');
+		if (sociosGanadores.length > 0) {
 
-			//Mostrar ganador en caso e haberlo
-			$("#card-ganador").show();
-			$("#nombreGanador").empty();
-			$("#nombreGanador").append(socioga.nombreSocio);
-			$("#cedulaGanador").empty();
-			$("#cedulaGanador").append('Cédula: ' + Mascara(socioga.cedula));
-			$("#numeroGanador").empty();
-			$("#numeroGanador").append('Número socio: ' + socioga.numeroSocio);
+			// Limpiar contenedor
+			$("#contenedor-ganadores").empty();
+
+			if(sociosGanadores.length >= 3){
+				$("#btn-funcion").hide();
+			}
+
+			sociosGanadores.forEach(function (socio) {
+
+				var card = `
+					<div class="card mb-3 shadow" style="max-width:25rem; width:30rem;">
+						<div class="card-header bg-success text-white h3">
+							Ganador
+						</div>
+						<div class="card-body">
+							<h5 class="card-title" style="color:#09467C">
+								${socio.nombreSocio}
+							</h5>
+							<p class="m-0 p-0">
+								Cédula: ${Mascara(socio.cedula)}
+							</p>
+							<p class="m-0 p-0">
+								Número socio: ${socio.numeroSocio}
+							</p>
+						</div>
+					</div>
+				`;
+
+				$("#contenedor-ganadores").append(card);
+			});
 		}
 	}
 
 	function DefinirGanador() {
 		$("#btn-funcion").hide();
 		$("#btn-funcionFin").hide();
+		$("#contenedor-ganadores").show();
 		var codigosuc = $('#sucursalesDropdown').val();
 		var valores = codigosuc.split("-")
 		var numClienteGanador = $('#ganSucural').val();
