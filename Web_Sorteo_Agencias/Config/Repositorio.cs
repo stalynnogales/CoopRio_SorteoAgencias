@@ -91,11 +91,18 @@ namespace Web_Sorteo_Agencias.Config
             List<Socio> listadoSociosRegistrados = new List<Socio>();
             OracleConnection con = new OracleConnection(oradb_DESA);
             OracleCommand cmd = new OracleCommand();
-            cmd.CommandText = $@"SELECT A.*, d.NOMBRE NOMBRESUCURSAL FROM FBS_RIFAS.TEMP_SORTEO_AGENCIAS a
-                    INNER JOIN FBS_ORGANIZACIONES.OFICINA o ON o.SECUENCIALDIVISION = a.SUCURSAL
-                    INNER JOIN FBS_GENERALES.DIVISION d ON d.SECUENCIAL = o.SECUENCIALDIVISION 
-                    WHERE a.SUCURSAL = {codigo} AND a.tipo = {tipo}
-                    ORDER BY a.SECUENCIAL";
+            cmd.CommandText = $@"SELECT
+                    a.*,
+                    CASE a.SUCURSAL
+                        WHEN 1 THEN 'OFICINAS RIOBAMBA'
+                        WHEN 2 THEN 'OFICINAS CHIMBORAZO'
+                        WHEN 3 THEN 'OFICINAS QUITO'
+                        WHEN 4 THEN 'OFICINAS CUENCA'
+                    END AS NOMBRESUCURSAL
+                FROM FBS_RIFAS.TEMP_SORTEO_AGENCIAS a
+                WHERE a.SUCURSAL = {codigo}
+                AND a.TIPO = {tipo}
+                ORDER BY a.SECUENCIAL";
             cmd.Connection = con;
             con.Open();
             OracleDataReader qr = cmd.ExecuteReader();
