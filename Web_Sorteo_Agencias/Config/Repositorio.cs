@@ -19,71 +19,210 @@ namespace Web_Sorteo_Agencias.Config
             OracleConnection con = new OracleConnection(oradb_DESA);
             OracleCommand cmd = new OracleCommand();
             cmd.CommandText = $@"SELECT 
-                        sub.SECUENCIALOFICINA SECUENCIALDIVISION,
-                        (sub.NOMBRE || ' TRANSACCIÓN CANALES') AS NOMBRE,
-                        COUNT(*) AS NUMERO_SOCIOS,
-                        1 AS TIPO
-                    FROM (
-                        SELECT 
-                        c.SECUENCIALOFICINA,
-                        c.SECUENCIALCLIENTEPRINCIPAL,
-                        p.NOMBREUNIDO , p.IDENTIFICACION,
-                        c2.NUMEROCLIENTE,
-                        COUNT(*) AS TOTAL_MOVIMIENTOS,
-                        d.NOMBRE
-		                    FROM FBS_CAPTACIONESVISTA.MOVIMIENTOCUENTACOMP_VISTA mv
-		                    INNER JOIN FBS_CAPTACIONESVISTA.CUENTAMAESTRO c ON c.SECUENCIAL = mv.SECUENCIALCUENTA
-		                    INNER JOIN FBS_ORGANIZACIONES.OFICINA o ON o.SECUENCIALDIVISION = c.SECUENCIALOFICINA
-		                    INNER JOIN FBS_GENERALES.DIVISION d ON d.SECUENCIAL = o.SECUENCIALDIVISION
-		                    INNER JOIN fbs_clientes.CLIENTE c2 ON c2.SECUENCIAL = c.SECUENCIALCLIENTEPRINCIPAL
-		                    INNER JOIN FBS_PERSONAS.PERSONA p ON p.SECUENCIAL = c2.SECUENCIALPERSONA
-		                    WHERE 
-		                        mv.CODIGOUSUARIO = 'canal.digital'
-		                        AND mv.VALOR NOT IN (0.36,0.31,0.05)
-		                        AND o.SECUENCIALDIVISION NOT IN (69483,69484,69482,69481,69479,69475)
-		                        AND mv.FECHAMOVIMIENTO BETWEEN TO_DATE('2025-11-01', 'YYYY-MM-DD')
-		                                                   AND TO_DATE('2025-11-30', 'YYYY-MM-DD')
-		                        AND NOT EXISTS (
-		                            SELECT 1 
-		                            FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
-		                            WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
-		                        )
-		                    GROUP BY 
-		                        c.SECUENCIALOFICINA, 
-		                        c.SECUENCIALCLIENTEPRINCIPAL,
-		                        p.NOMBREUNIDO , p.IDENTIFICACION,
-		                        c2.NUMEROCLIENTE, 
-		                        d.NOMBRE
-		                    HAVING 
-		                        COUNT(*) > 10
-                    ) sub
-                    GROUP BY sub.SECUENCIALOFICINA, sub.NOMBRE
-                    UNION ALL
-                    SELECT 
-                         D.SECUENCIAL SECUENCIALDIVISION,
-                         (d.NOMBRE || ' ACTIVACIÓN CANALES') AS NOMBRE,
-                         COUNT(DISTINCT C2.SECUENCIAL) AS NUMERO_SOCIOS,
-                         2 AS TIPO
-	                    FROM FBS_CLIENTES.CLIENTEREGISTROCANALESDIGITALES C
-	                    INNER JOIN FBS_CLIENTES.CLIENTE C2 ON C2.SECUENCIAL = C.SECUENCIALCLIENTE
-	                    INNER JOIN FBS_PERSONAS.PERSONA P ON P.SECUENCIAL = C2.SECUENCIALPERSONA 
-	                    LEFT JOIN FBS_INTERNETHUB.USUARIO IU ON IU.IDENTIFICACION = P.IDENTIFICACION 
-	                    INNER JOIN FBS_CAPTACIONESVISTA.CUENTAMAESTRO C3 ON C3.SECUENCIALCLIENTEPRINCIPAL = C2.SECUENCIAL 
-	                    INNER JOIN FBS_SEGURIDADES.USUARIO U ON U.CODIGO = C.CODIGOUSUARIO 
-	                    INNER JOIN FBS_GENERALES.DIVISION D ON D.SECUENCIAL = U.SECUENCIALOFICINA 
-	                    WHERE 
-	                        (C.ESPARAMOVIL <> 0 OR C.ESPARAWEB <> 0)
-	                        AND D.SECUENCIAL NOT IN (69483,69484)
-	                        AND C.FECHASISTEMA BETWEEN TO_DATE('2025-11-01', 'YYYY-MM-DD') 
-	                                                 AND TO_DATE('2025-11-30', 'YYYY-MM-DD')
-                        AND NOT EXISTS (
-                            SELECT 1 
-                            FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO UC
-                            WHERE UC.SECUENCIALPERSONA = P.SECUENCIAL
-                        )
-                    GROUP BY 
-                        D.NOMBRE, D.SECUENCIAL
-                    ORDER BY SECUENCIALDIVISION, TIPO";
+              sub.SECUENCIALOFICINA SECUENCIALDIVISION,
+              ('CUENCA ARENAL TV') AS NOMBRE,
+              COUNT(DISTINCT sub.SECUENCIALCLIENTEPRINCIPAL) AS NUMERO_SOCIOS,
+              1 AS TIPO
+            FROM (
+	            SELECT 
+	            --p.identificacion, pm.NUMEROPRESTAMO
+	            pm.* 
+	            FROM FBS_CARTERA.PRESTAMOMAESTRO pm 
+	            INNER JOIN FBS_CLIENTES.CLIENTE c ON c.secuencial = pm.SECUENCIALCLIENTEPRINCIPAL
+	            INNER JOIN FBS_PERSONAS.PERSONA p ON p.secuencial = c.secuencialpersona
+	            WHERE pm.SECUENCIALOFICINA = 69475
+	            AND pm.CODIGOESTADOPRESTAMO = 'A'
+	            AND NOT EXISTS (
+	                  SELECT 1
+	                  FROM FBS_CARTERA.PRESTAMOCOMPONENTE_CARTERA pc
+	                  WHERE pc.SECUENCIALPRESTAMO = pm.SECUENCIAL
+	                    AND pc.DIASATRASO <> 0
+	            )
+	            AND NOT EXISTS (
+		              SELECT 1 
+		              FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
+		              WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
+	            )
+	            AND PM.FECHAADJUDICACION BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD') AND TO_DATE('2026-10-31', 'YYYY-MM-DD')
+            ) sub  GROUP BY sub.SECUENCIALOFICINA
+            UNION ALL
+            SELECT 
+              sub.SECUENCIALOFICINA SECUENCIALDIVISION,
+              ('CUENCA ARENAL COCINA') AS NOMBRE,
+              COUNT(DISTINCT sub.SECUENCIALCLIENTEPRINCIPAL) AS NUMERO_SOCIOS,
+              2 AS TIPO
+            FROM (
+	            SELECT 
+	            --p.identificacion, pm.NUMEROPRESTAMO
+	            pm.* 
+	            FROM FBS_CARTERA.PRESTAMOMAESTRO pm 
+	            INNER JOIN FBS_CLIENTES.CLIENTE c ON c.secuencial = pm.SECUENCIALCLIENTEPRINCIPAL
+	            INNER JOIN FBS_PERSONAS.PERSONA p ON p.secuencial = c.secuencialpersona
+	            WHERE pm.SECUENCIALOFICINA = 69475
+	            AND pm.CODIGOESTADOPRESTAMO = 'A'
+	            AND pm.DEUDAINICIAL < 10000 
+	            AND NOT EXISTS (
+	                  SELECT 1
+	                  FROM FBS_CARTERA.PRESTAMOCOMPONENTE_CARTERA pc
+	                  WHERE pc.SECUENCIALPRESTAMO = pm.SECUENCIAL
+	                    AND pc.DIASATRASO > 5
+	            )
+	            AND NOT EXISTS (
+		              SELECT 1 
+		              FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
+		              WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
+	            )
+	            AND PM.FECHAADJUDICACION BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD') AND TO_DATE('2026-10-31', 'YYYY-MM-DD')
+            ) sub GROUP BY sub.SECUENCIALOFICINA
+            UNION ALL 
+            SELECT 
+              sub.SECUENCIALOFICINA SECUENCIALDIVISION,
+              ('CUENCA ARENAL LAVADORA') AS NOMBRE,
+              COUNT(DISTINCT sub.SECUENCIALCLIENTEPRINCIPAL) AS NUMERO_SOCIOS,
+              3 AS TIPO
+            FROM (
+	            SELECT 
+	            --p.identificacion, D.codigo
+	            d.* 
+	            FROM FBS_CAPTACIONESPLAZO.DEPOSITOMAESTRO d 
+	            INNER JOIN FBS_CLIENTES.CLIENTE c ON c.secuencial = d.SECUENCIALCLIENTEPRINCIPAL
+	            INNER JOIN FBS_PERSONAS.PERSONA p ON p.secuencial = c.secuencialpersona
+	            WHERE d.SECUENCIALOFICINA = 69475
+	            AND d.PLAZOENDIAS < 360
+	            AND d.CODIGOESTADODEPOSITO = 'A'
+	            AND NOT EXISTS (
+			              SELECT 1 
+			              FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
+			              WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
+		            )
+	            AND d.FECHACREACION BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD') AND TO_DATE('2026-10-31', 'YYYY-MM-DD')
+            ) sub GROUP BY sub.SECUENCIALOFICINA
+            UNION ALL
+            SELECT 
+              sub.SECUENCIALOFICINA SECUENCIALDIVISION,
+              ('CUENCA ARENAL BICICLETA') AS NOMBRE,
+              COUNT(DISTINCT sub.SECUENCIALCLIENTEPRINCIPAL) AS NUMERO_SOCIOS,
+              4 AS TIPO
+            FROM (
+	            SELECT 
+	            --p.identificacion, CM.codigo
+	            cm.* 
+	            FROM FBS_CAPTACIONESVISTA.CUENTAMAESTRO cm
+	            INNER JOIN FBS_CLIENTES.CLIENTE c ON c.secuencial = cm.SECUENCIALCLIENTEPRINCIPAL
+	            INNER JOIN FBS_PERSONAS.PERSONA p ON p.secuencial = c.secuencialpersona
+	            WHERE cm.SECUENCIALOFICINA = 69475
+	            AND cm.CODIGOTIPOCUENTA = 12
+	            AND cm.CODIGOESTADO = 'A'
+	            AND NOT EXISTS (
+				              SELECT 1 
+				              FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
+				              WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
+	            )
+	            AND cm.FECHASISTEMACREACION BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD') AND TO_DATE('2026-10-31', 'YYYY-MM-DD')
+            ) sub GROUP BY sub.SECUENCIALOFICINA
+            UNION ALL
+            SELECT 
+              sub.SECUENCIALOFICINA SECUENCIALDIVISION,
+              ('CUENCA CENTRO TV') AS NOMBRE,
+              COUNT(DISTINCT sub.SECUENCIALCLIENTEPRINCIPAL) AS NUMERO_SOCIOS,
+              1 AS TIPO
+            FROM (
+	            SELECT 
+	            --p.identificacion, pm.NUMEROPRESTAMO
+	            pm.* 
+	            FROM FBS_CARTERA.PRESTAMOMAESTRO pm 
+	            INNER JOIN FBS_CLIENTES.CLIENTE c ON c.secuencial = pm.SECUENCIALCLIENTEPRINCIPAL
+	            INNER JOIN FBS_PERSONAS.PERSONA p ON p.secuencial = c.secuencialpersona
+	            WHERE pm.SECUENCIALOFICINA = 69479
+	            AND pm.CODIGOESTADOPRESTAMO = 'A'
+	            AND NOT EXISTS (
+	                  SELECT 1
+	                  FROM FBS_CARTERA.PRESTAMOCOMPONENTE_CARTERA pc
+	                  WHERE pc.SECUENCIALPRESTAMO = pm.SECUENCIAL
+	                    AND pc.DIASATRASO <> 0
+	            )
+	            AND NOT EXISTS (
+		              SELECT 1 
+		              FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
+		              WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
+	            )
+	            AND PM.FECHAADJUDICACION BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD') AND TO_DATE('2026-10-31', 'YYYY-MM-DD')
+            ) sub  GROUP BY sub.SECUENCIALOFICINA
+            UNION ALL
+            SELECT 
+              sub.SECUENCIALOFICINA SECUENCIALDIVISION,
+              ('CUENCA CENTRO COCINA') AS NOMBRE,
+              COUNT(DISTINCT sub.SECUENCIALCLIENTEPRINCIPAL) AS NUMERO_SOCIOS,
+              2 AS TIPO
+            FROM (
+	            SELECT 
+	            --p.identificacion, pm.NUMEROPRESTAMO
+	            pm.* 
+	            FROM FBS_CARTERA.PRESTAMOMAESTRO pm 
+	            INNER JOIN FBS_CLIENTES.CLIENTE c ON c.secuencial = pm.SECUENCIALCLIENTEPRINCIPAL
+	            INNER JOIN FBS_PERSONAS.PERSONA p ON p.secuencial = c.secuencialpersona
+	            WHERE pm.SECUENCIALOFICINA = 69479
+	            AND pm.CODIGOESTADOPRESTAMO = 'A'
+	            AND pm.DEUDAINICIAL < 10000 
+	            AND NOT EXISTS (
+	                  SELECT 1
+	                  FROM FBS_CARTERA.PRESTAMOCOMPONENTE_CARTERA pc
+	                  WHERE pc.SECUENCIALPRESTAMO = pm.SECUENCIAL
+	                    AND pc.DIASATRASO > 5
+	            )
+	            AND NOT EXISTS (
+		              SELECT 1 
+		              FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
+		              WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
+	            )
+	            AND PM.FECHAADJUDICACION BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD') AND TO_DATE('2026-10-31', 'YYYY-MM-DD')
+            ) sub GROUP BY sub.SECUENCIALOFICINA
+            UNION ALL 
+            SELECT 
+              sub.SECUENCIALOFICINA SECUENCIALDIVISION,
+              ('CUENCA CENTRO REFRIGERADORA') AS NOMBRE,
+              COUNT(DISTINCT sub.SECUENCIALCLIENTEPRINCIPAL) AS NUMERO_SOCIOS,
+              3 AS TIPO
+            FROM (
+	            SELECT 
+	            --p.identificacion, D.codigo
+	            d.* 
+	            FROM FBS_CAPTACIONESPLAZO.DEPOSITOMAESTRO d 
+	            INNER JOIN FBS_CLIENTES.CLIENTE c ON c.secuencial = d.SECUENCIALCLIENTEPRINCIPAL
+	            INNER JOIN FBS_PERSONAS.PERSONA p ON p.secuencial = c.secuencialpersona
+	            WHERE d.SECUENCIALOFICINA = 69479
+	            AND d.PLAZOENDIAS < 360
+	            AND d.CODIGOESTADODEPOSITO = 'A'
+	            AND NOT EXISTS (
+			              SELECT 1 
+			              FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
+			              WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
+		            )
+	            AND d.FECHACREACION BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD') AND TO_DATE('2026-10-31', 'YYYY-MM-DD')
+            ) sub GROUP BY sub.SECUENCIALOFICINA
+            UNION ALL
+            SELECT 
+              sub.SECUENCIALOFICINA SECUENCIALDIVISION,
+              ('CUENCA CENTRO TABLET') AS NOMBRE,
+              COUNT(DISTINCT sub.SECUENCIALCLIENTEPRINCIPAL) AS NUMERO_SOCIOS,
+              4 AS TIPO
+            FROM (
+	            SELECT 
+	            --p.identificacion, cm.codigo
+	            cm.* 
+	            FROM FBS_CAPTACIONESVISTA.CUENTAMAESTRO cm
+	            INNER JOIN FBS_CLIENTES.CLIENTE c ON c.secuencial = cm.SECUENCIALCLIENTEPRINCIPAL
+	            INNER JOIN FBS_PERSONAS.PERSONA p ON p.secuencial = c.secuencialpersona
+	            WHERE cm.SECUENCIALOFICINA = 69479
+	            AND cm.CODIGOTIPOCUENTA = 12
+	            AND cm.CODIGOESTADO = 'A'
+	            AND NOT EXISTS (
+				              SELECT 1 
+				              FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
+				              WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
+	            )
+	            AND cm.FECHASISTEMACREACION BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD') AND TO_DATE('2026-10-31', 'YYYY-MM-DD')
+            ) sub GROUP BY sub.SECUENCIALOFICINA";
             cmd.Connection = con;
             con.Open();
             OracleDataReader dr = cmd.ExecuteReader();
@@ -174,72 +313,126 @@ namespace Web_Sorteo_Agencias.Config
 
             if(tipo == 1)
             {
+                /* TODOS LOS CREDITOS DESEMBOLSADOS DESDE EL 1 DE ENERO DEL 2026 AL 31 DE OCTUBRE DEL 2026, 
+                   QUE SE HAYAN PAGADO TODAS LAS CUOTAS CON 0 DIAS DE RETRASO Y SE ENCUENTRE EL CRÉDITO ACTIVO */
                 cmd.CommandText = $@"SELECT 
-                                    c.SECUENCIALOFICINA SUCURSAL,
-                                    c.SECUENCIALCLIENTEPRINCIPAL,
-                                    p.NOMBREUNIDO SOCIO,
-                                    p.IDENTIFICACION CEDULA,
-                                    c2.NUMEROCLIENTE NUMSOCIO,
-                                    COUNT(*) AS DETALLE,
-                                    d.NOMBRE NOMBRESUCURSAL
-	                        FROM FBS_CAPTACIONESVISTA.MOVIMIENTOCUENTACOMP_VISTA mv
-	                        INNER JOIN FBS_CAPTACIONESVISTA.CUENTAMAESTRO c ON c.SECUENCIAL = mv.SECUENCIALCUENTA
-	                        INNER JOIN FBS_ORGANIZACIONES.OFICINA o ON o.SECUENCIALDIVISION = c.SECUENCIALOFICINA
-	                        INNER JOIN FBS_GENERALES.DIVISION d ON d.SECUENCIAL = o.SECUENCIALDIVISION
-	                        INNER JOIN fbs_clientes.CLIENTE c2 ON c2.SECUENCIAL = c.SECUENCIALCLIENTEPRINCIPAL
-	                        INNER JOIN FBS_PERSONAS.PERSONA p ON p.SECUENCIAL = c2.SECUENCIALPERSONA
-	                        WHERE 
-	                            mv.CODIGOUSUARIO = 'canal.digital'
-	                            AND mv.VALOR NOT IN (0.36,0.31,0.05)
-	                            AND d.SECUENCIAL NOT IN (69483,69484)
-    	                        AND d.SECUENCIAL = {sucursal}
-	                            AND mv.FECHAMOVIMIENTO BETWEEN TO_DATE('2025-11-01', 'YYYY-MM-DD')
-	                                                       AND TO_DATE('2025-11-30', 'YYYY-MM-DD')
-	                            AND NOT EXISTS (
-	                                SELECT 1 
-	                                FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
-	                                WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
-	                            )
-	                        GROUP BY 
-	                            c.SECUENCIALOFICINA, 
-	                            c.SECUENCIALCLIENTEPRINCIPAL,
-	                            p.NOMBREUNIDO , p.IDENTIFICACION,
-	                            c2.NUMEROCLIENTE, 
-	                            d.NOMBRE
-	                        HAVING 
-	                            COUNT(*) > 10";
+	                pm.SECUENCIALOFICINA SUCURSAL,
+                    pm.SECUENCIALCLIENTEPRINCIPAL,
+                    p.NOMBREUNIDO SOCIO,
+                    p.IDENTIFICACION CEDULA,
+                    c.NUMEROCLIENTE NUMSOCIO,
+                    pm.NUMEROPRESTAMO DETALLE,
+                    d.NOMBRE NOMBRESUCURSAL
+	                FROM FBS_CARTERA.PRESTAMOMAESTRO pm 
+	                INNER JOIN FBS_CLIENTES.CLIENTE c ON c.secuencial = pm.SECUENCIALCLIENTEPRINCIPAL
+	                INNER JOIN FBS_PERSONAS.PERSONA p ON p.secuencial = c.secuencialpersona
+	                INNER JOIN FBS_ORGANIZACIONES.OFICINA o ON o.SECUENCIALDIVISION = pm.SECUENCIALOFICINA
+	                INNER JOIN FBS_GENERALES.DIVISION d ON d.SECUENCIAL = o.SECUENCIALDIVISION
+	                WHERE pm.SECUENCIALOFICINA = {sucursal}
+	                AND pm.CODIGOESTADOPRESTAMO = 'A'
+	                AND NOT EXISTS (
+	                      SELECT 1
+	                      FROM FBS_CARTERA.PRESTAMOCOMPONENTE_CARTERA pc
+	                      WHERE pc.SECUENCIALPRESTAMO = pm.SECUENCIAL
+	                        AND pc.DIASATRASO <> 0
+	                )
+	                AND NOT EXISTS (
+		                  SELECT 1 
+		                  FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
+		                  WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
+	                )
+	                AND PM.FECHAADJUDICACION BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD') AND TO_DATE('2026-10-31', 'YYYY-MM-DD')";
             }
 
             if(tipo == 2)
             {
+                /* TODOS LOS CRÉDITOS INFERIORES A $10.000 DOLARES DESEMBOLSADOS  DESDE EL 1 DE ENERO DEL 2026 AL 31 DE OCTUBRE DEL 2026,  
+                   QUE SE HAYAN PAGADO TODAS LAS CUOTAS HASTA CON 5 DIAS DE RETRASO   Y SE ENCUENTREN ACTIVOS */
                 cmd.CommandText = $@"SELECT 
-                                 DISTINCT C2.SECUENCIAL,
-                                 p.NOMBREUNIDO SOCIO,
-                                 p.IDENTIFICACION CEDULA,
-                                 c2.NUMEROCLIENTE NUMSOCIO,
-                                 d.SECUENCIAL SUCURSAL,
-                                 D.NOMBRE NOMBRESUCURSAL,
-                                 C.FECHAMAQUINA DETALLE
-                            FROM FBS_CLIENTES.CLIENTEREGISTROCANALESDIGITALES C
-                            INNER JOIN FBS_CLIENTES.CLIENTE C2 ON C2.SECUENCIAL = C.SECUENCIALCLIENTE
-                            INNER JOIN FBS_PERSONAS.PERSONA P ON P.SECUENCIAL = C2.SECUENCIALPERSONA 
-                            LEFT JOIN FBS_INTERNETHUB.USUARIO IU ON IU.IDENTIFICACION = P.IDENTIFICACION 
-                            INNER JOIN FBS_CAPTACIONESVISTA.CUENTAMAESTRO C3 ON C3.SECUENCIALCLIENTEPRINCIPAL = C2.SECUENCIAL 
-                            INNER JOIN FBS_SEGURIDADES.USUARIO U ON U.CODIGO = C.CODIGOUSUARIO 
-                            INNER JOIN FBS_GENERALES.DIVISION D ON D.SECUENCIAL = U.SECUENCIALOFICINA 
-                            WHERE 
-                                (C.ESPARAMOVIL <> 0 OR C.ESPARAWEB <> 0)
-                                AND d.SECUENCIAL NOT IN (69483,69484)
-                                AND d.SECUENCIAL = {sucursal}
-                                AND C.FECHASISTEMA BETWEEN TO_DATE('2025-11-01', 'YYYY-MM-DD') 
-                                                         AND TO_DATE('2025-11-30', 'YYYY-MM-DD')
-                                AND NOT EXISTS (
-                                    SELECT 1 
-                                    FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO UC
-                                    WHERE UC.SECUENCIALPERSONA = P.SECUENCIAL
-                                )
-                            ORDER BY 
-                                c2.SECUENCIAL";
+	                pm.SECUENCIALOFICINA SUCURSAL,
+                    pm.SECUENCIALCLIENTEPRINCIPAL,
+                    p.NOMBREUNIDO SOCIO,
+                    p.IDENTIFICACION CEDULA,
+                    c.NUMEROCLIENTE NUMSOCIO,
+                    pm.NUMEROPRESTAMO DETALLE,
+                    d.NOMBRE NOMBRESUCURSAL
+	                FROM FBS_CARTERA.PRESTAMOMAESTRO pm 
+	                INNER JOIN FBS_CLIENTES.CLIENTE c ON c.secuencial = pm.SECUENCIALCLIENTEPRINCIPAL
+	                INNER JOIN FBS_PERSONAS.PERSONA p ON p.secuencial = c.secuencialpersona
+	                INNER JOIN FBS_ORGANIZACIONES.OFICINA o ON o.SECUENCIALDIVISION = pm.SECUENCIALOFICINA
+	                INNER JOIN FBS_GENERALES.DIVISION d ON d.SECUENCIAL = o.SECUENCIALDIVISION
+	                WHERE pm.SECUENCIALOFICINA = {sucursal}
+	                AND pm.CODIGOESTADOPRESTAMO = 'A'
+	                AND pm.DEUDAINICIAL < 10000 
+	                AND NOT EXISTS (
+	                      SELECT 1
+	                      FROM FBS_CARTERA.PRESTAMOCOMPONENTE_CARTERA pc
+	                      WHERE pc.SECUENCIALPRESTAMO = pm.SECUENCIAL
+	                        AND pc.DIASATRASO > 5
+	                )
+	                AND NOT EXISTS (
+		                  SELECT 1 
+		                  FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
+		                  WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
+	                )
+	                AND PM.FECHAADJUDICACION BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD') AND TO_DATE('2026-10-31', 'YYYY-MM-DD')";
+            }
+
+            if (tipo == 3)
+            {
+                /* TODOS LOS DEPOSITOS A PLAZO FIJO QUE SE HAYAN APRETURADO DESDE EL 1 DE ENERO DEL 2026 AL 31 DE OCTUBRE DEL 2026, 
+                   QUE SU PLAZO SEA MENOR A 360 DÍAS Y SE ENCUENTREN ACTIVOS*/
+                cmd.CommandText = $@"SELECT 
+	                d.SECUENCIALOFICINA SUCURSAL,
+                    d.SECUENCIALCLIENTEPRINCIPAL,
+                    p.NOMBREUNIDO SOCIO,
+                    p.IDENTIFICACION CEDULA,
+                    c.NUMEROCLIENTE NUMSOCIO,
+                    d.CODIGO DETALLE,
+                    di.NOMBRE NOMBRESUCURSAL
+	                FROM FBS_CAPTACIONESPLAZO.DEPOSITOMAESTRO d 
+	                INNER JOIN FBS_CLIENTES.CLIENTE c ON c.secuencial = d.SECUENCIALCLIENTEPRINCIPAL
+	                INNER JOIN FBS_PERSONAS.PERSONA p ON p.secuencial = c.secuencialpersona
+	                INNER JOIN FBS_ORGANIZACIONES.OFICINA o ON o.SECUENCIALDIVISION = d.SECUENCIALOFICINA
+	                INNER JOIN FBS_GENERALES.DIVISION di ON di.SECUENCIAL = o.SECUENCIALDIVISION
+	                WHERE d.SECUENCIALOFICINA = {sucursal}
+	                AND d.PLAZOENDIAS < 360
+	                AND d.CODIGOESTADODEPOSITO = 'A'
+	                AND NOT EXISTS (
+			                  SELECT 1 
+			                  FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
+			                  WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
+		                )
+	                AND d.FECHACREACION BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD') AND TO_DATE('2026-10-31', 'YYYY-MM-DD')";
+            }
+
+            if (tipo == 4)
+            {
+                /* TODAS LAS CUENTAS INFANTILES QUE SE APERTUREN DESDE EL 1 DE ENERO DEL 2026 AL 31 DE OCTUBRE DEL 2026, 
+                   SE ENCUENTREN EN ESTADO ACTIVO  */
+                cmd.CommandText = $@"SELECT 
+	                cm.SECUENCIALOFICINA SUCURSAL,
+                    cm.SECUENCIALCLIENTEPRINCIPAL,
+                    p.NOMBREUNIDO SOCIO,
+                    p.IDENTIFICACION CEDULA,
+                    c.NUMEROCLIENTE NUMSOCIO,
+                     cmp.NOMBRECUENTA || ' - ' || cm.CODIGO DETALLE,
+                    di.NOMBRE NOMBRESUCURSAL
+	                FROM FBS_CAPTACIONESVISTA.CUENTAMAESTRO cm
+                    INNER JOIN FBS_CAPTACIONESVISTA.CUENTAMAESTRO_PERSONALIZADO cmp ON cmp.SECUENCIALCUENTA = cm.SECUENCIAL 
+	                INNER JOIN FBS_CLIENTES.CLIENTE c ON c.secuencial = cm.SECUENCIALCLIENTEPRINCIPAL
+	                INNER JOIN FBS_PERSONAS.PERSONA p ON p.secuencial = c.secuencialpersona
+	                INNER JOIN FBS_ORGANIZACIONES.OFICINA o ON o.SECUENCIALDIVISION = cm.SECUENCIALOFICINA
+	                INNER JOIN FBS_GENERALES.DIVISION di ON di.SECUENCIAL = o.SECUENCIALDIVISION
+	                WHERE cm.SECUENCIALOFICINA = {sucursal}
+	                AND cm.CODIGOTIPOCUENTA = 12
+	                AND cm.CODIGOESTADO = 'A'
+	                AND NOT EXISTS (
+				                  SELECT 1 
+				                  FROM FBS_SEGURIDADES.USUARIO_COMPLEMENTO uc 
+				                  WHERE uc.SECUENCIALPERSONA = p.SECUENCIAL
+	                )
+	                AND cm.FECHASISTEMACREACION BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD') AND TO_DATE('2026-10-31', 'YYYY-MM-DD')";
             }
 
             cmd.Connection = con;

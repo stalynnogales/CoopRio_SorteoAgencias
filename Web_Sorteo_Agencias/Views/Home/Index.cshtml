@@ -9,7 +9,7 @@
 }
 
 <div class="text-center">
-	<p class="h2 mb-3" style="color:#09467C">SORTEO CANALES DIGITALES @DateTime.Now.Year</p>
+	<p class="h2 mb-3" style="color:#09467C">SORTEO AGENCIAS CUENCA @DateTime.Now.Year</p>
 	<div class="container">
 		<div class="row justify-content-center d-flex mb-3">
 			<div class="col-lg-4 col-md-8">
@@ -60,7 +60,7 @@
 
 						<div class="d-grid gap-2 mx-auto">
 							<div id="btn-funcion" style="display:none">
-								<button onclick="BuscarSocio()" class="btn btn-success px-4 btn-lg rounded-pill">Aceptar</button><br>
+								<button onclick="BuscarSocio()" class="btn btn-success px-4 btn-lg rounded-pill">Buscar socio</button><br>
 							</div>
 							<div id="btn-funcionFin" style="display:none">
 								<input id="ganSucural" hidden />
@@ -122,6 +122,7 @@
 		$("#btn-funcion").hide();
 		$("#card-ganador").hide();
 		$("#tablaSocios").hide();
+		$("#btn-funcionFin").hide();
 		const valores = val.split("-")
 		$.ajax({
 			url: "@Url.Action("sucursalSelected", "Home")",
@@ -129,7 +130,6 @@
 			data: { codigo: valores[0], tipo: valores[1] },
 			traditional: true,
 			success: function (response) {
-				//console.log('1',response)
 				$("#spinner").hide();
 				$("#nombreSucursal").append(response.sucursal.descripcion.toUpperCase());
 				$("#numeroSocios").append(response.sucursal.numero);
@@ -139,6 +139,11 @@
 
 				if (response.sociosRegistrados.length > 0) {
 					PintarDatosTabla(response.sociosRegistrados);
+					var socioga = response.sociosRegistrados.find(x => x.estado === 'Ganador');
+					if (socioga == undefined) {
+						$("#btn-funcionFin").show();
+						$("#ganSucural").val(response.sociosRegistrados[response.sociosRegistrados.length - 1].numeroSocio);
+					}
 				}
 			}
 		});
@@ -156,7 +161,6 @@
 			data: { codigo: valores[0], tipo:valores[1] },
 			traditional: true,
 			success: function (response) {
-				//console.log('2',response);
 				$("#spinnerTabla").hide();
 				PintarDatosTabla(response);
 				$("#btn-funcionFin").show();
@@ -166,10 +170,8 @@
 	}
 
 	function PintarDatosTabla(listaSocios) {
-		//console.log('3',listaSocios)
 		document.getElementById("tablaSocios").querySelector("tbody").innerHTML = "";
 		$.each(listaSocios, function (index, socio) {
-			//console.log('4',socio)
 			var fila = $('<tr>').append(
 				$('<td>').text(socio.nombreSocio),
 				$('<td>').text(Mascara(socio.cedula)),
@@ -211,7 +213,6 @@
 			data: { codigo: valores[0], numclgan: numClienteGanador, tipo: valores[1] },
 			traditional: true,
 			success: function (response) {
-				//console.log('ok',response);
 				if (response.length > 0) {
 					PintarDatosTabla(response);
 				}
